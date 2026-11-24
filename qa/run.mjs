@@ -37,7 +37,7 @@ function rule([age, inc, school, kouki]) {
 }
 // しくみの問題の答え（国民健康保険法・健康保険法・高確法）
 const FACT = { kouki: "後期高齢者医療", ichibu: "一部負担金", kouiki: "後期高齢者医療広域連合", kubun3: "1割・2割・3割の3つ", dochira: "どちらも3割", shogai: "65〜74歳で一定の障害の認定を受けた人",
-  m70: "70歳に達する日がある月の次の月から", m6: "6歳になった後の最初の3月31日まで", k75: "75歳に達したとき", genyaku: "現役並みの所得がある人" };
+  m70: "70歳に達する日がある月の次の月から", m6: "6歳に達する日以後の最初の3月31日まで", k75: "75歳に達したとき", genyaku: "現役並みの所得の区分に当たる人" };
 const SRC_RE = /^https:\/\/laws\.e-gov\.go\.jp\/law\/(333AC0000000192|211AC0000000070|357AC0000000080)$/;
 {
   const bad = {}, seen = {}, N = 3000;
@@ -76,6 +76,8 @@ const SRC_RE = /^https:\/\/laws\.e-gov\.go\.jp\/law\/(333AC0000000192|211AC00000
   const okSrc = Object.values(G.SRC).every(([n, u]) => /（e-Gov 法令検索）$/.test(n) && SRC_RE.test(u));
   check("出典は e-Gov 法令検索の法律（国民健康保険法・健康保険法・高確法）だけ", okSrc);
   check("医療費控除（医療費控除いくら？）・年金・保険料の額・自治体の助成を答えにしない", !G.KINDS.some((k) => { const all = [k.why, k.look, k.key, k.ans]; for (let i = 0; i < 100; i++) { const P = G.make(`${k.id}|nz${i}`); all.push(P.q, P.ans); } return /医療費控除|年金を|保険料は|助成で|無料になる/.test(all.join()); }));
+  // 後期高齢者医療の「一般」は一般Ⅰ（1割）と一般Ⅱ（2割）があり、答えが決まらない（PR #1 の CodeRabbit）。「6歳になった後」は3月31日に達する子を外して読める（同）
+  check("言い方：所得は「一定以上ではない」「現役並みの区分」で書き、「一般の区分」と書かない。子どもの境目は「6歳に達する日以後」と書く", !G.KINDS.some((k) => /一般の区分|所得は一般|なった後の最初/.test([k.person || "", k.look, k.key, k.why, k.ans, ...Object.values(G.GROUPS).map((g) => g.sub), ...Object.values(G.GRP_WHY)].join())));
   check("2段目は4つ（6歳〜69歳・小学校に入る前・70〜74歳・後期高齢者医療）", Object.keys(G.GROUPS).join() === "gensoku,mishugaku,zenki,kouki");
 }
 {
